@@ -1,0 +1,7 @@
+pipeline:
+  lint:
+    image: quay.io/ukhomeofficedigital/helm:v3.2.1
+    commands:
+      - helm lint
+    when:
+      event: [push, pull_request]

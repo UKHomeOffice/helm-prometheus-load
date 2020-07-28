@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      name: {{ .Release.Name }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: {{ .Release.Name }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: {{ .Values.app.params.port | quote }}
+        release-repo: {{ .Values.app.metadata.repos.release | quote }}
+        deployment-repo: {{ .Values.app.metadata.repos.deployment | quote }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchExpressions:
+              - key: name
+                operator: In
+                values:
+                - {{ .Release.Name }}
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: {{ .Release.Name }}
+        image: "{{ .Values.app.image }}:{{ .Values.app.version }}"
+        args:
+        - --listen-address=:{{ .Values.app.params.port}}
+        {{- if .Values.app.params.metricCount }}
+        - --metric-count={{ .Values.app.params.metricCount }}
+        {{- end }}
+        {{- if .Values.app.params.metricName }}
+        - --metric-name={{ .Values.app.params.metricName }}
+        {{- end }}
+        {{- if .Values.app.params.sleepTime }}
+        - --sleep-time={{ .Values.app.params.sleepTime }}
+        {{- end }}
+        resources:
+          limits:
+            cpu: 100m
+            memory: 300Mi
+          requests:
+            cpu: 10m
+            memory: 100Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.app.params.port}}
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 60
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.app.params.port}}
+            scheme: HTTP
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
