@@ -1,0 +1,12 @@
+app:
+  params:
+    port: 8080
+    metricCount: "" # use default value from Docker image
+    metricName: "" # use default value from Docker image
+    sleepTime: 5 # use default value from Docker image
+  image: quay.io/ukhomeofficedigital/prometheus-load
+  version: v1.1.1@sha256:56f99ae2216f46b3217d7e0f948edfc630928e413b6d474dab8cef428b6dd403
+  metadata:
+    repos:
+      release: https://github.com/UKHomeOffice/docker-prometheus-load
+      deployment: https://github.com/UKHomeOffice/helm-prometheus-load
